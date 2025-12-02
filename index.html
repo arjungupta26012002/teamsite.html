@@ -1,0 +1,386 @@
+import React, { useState } from 'react';
+import { X, User, Users, Palette, ShoppingBag, Share2, Youtube, MessageCircle, PenTool, Video, Monitor, Laptop, Network } from 'lucide-react';
+
+const OrgChart = () => {
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [hoveredMemberId, setHoveredMemberId] = useState(null);
+
+  // Helper to flatten the data for easy lookup of collaborators
+  const findMemberData = (id, data) => {
+    if (data.leader.id === id) return data.leader;
+    for (const dept of data.departments) {
+      if (dept.manager?.id === id) return dept.manager;
+      const found = dept.members.find(m => m.id === id);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const organizationData = {
+    leader: {
+      id: 'sertan',
+      name: 'Sertan Christoffersen',
+      role: 'Executive Director - Founder',
+      department: 'Leadership',
+      color: 'bg-rose-400',
+      collaborators: ['arjun', 'alfredo'], // Works closely with leads
+      responsibilities: [
+        "Overall strategic direction",
+        "Company vision and mission",
+        "Brand management",
+        "Executive decision making"
+      ]
+    },
+    departments: [
+      {
+        id: 'projects',
+        name: 'Projects & IT',
+        icon: <Laptop className="w-6 h-6" />,
+        color: 'bg-cyan-200',
+        borderColor: 'border-cyan-300',
+        members: [
+          {
+            id: 'arjun',
+            name: 'Arjun Gupta',
+            role: 'Projects and IT Manager',
+            collaborators: ['sertan', 'alfredo', 'karishma'], 
+            responsibilities: [
+              "IT projects",
+              "Facilitator/project manager",
+              "Pembe Portal",
+              "Reports to Sertan"
+            ]
+          }
+        ]
+      },
+      {
+        id: 'merch_creative',
+        name: 'Merchandise & Creative',
+        icon: <Palette className="w-6 h-6" />,
+        color: 'bg-purple-200',
+        borderColor: 'border-purple-300',
+        manager: {
+          id: 'alfredo',
+          name: 'Alfredo Viguer',
+          role: 'Design and Approvals Manager',
+          collaborators: ['arjun', 'sertan', 'sarah', 'salini', 'jeki'], // Works with IT on portal, Founder on approvals
+          responsibilities: [
+            "Product design approvals",
+            "Style guides and brand",
+            "Mockups",
+            "Pembe Portal Asset Library",
+            "Licensee communications",
+            "Cycle Planning",
+            "Team Management"
+          ]
+        },
+        members: [
+          {
+            id: 'sarah',
+            name: 'Sarah Santangleo',
+            role: 'Multimedia Designer',
+            collaborators: ['karishma', 'patrick', 'alfredo'], // Creative supports Social
+            responsibilities: [
+              "Creative concepts, ideas and storyboards",
+              "Sketching and ideation",
+              "Mood boards",
+              "Coordination between creative team",
+              "Weekly planning",
+              "Product trend spotter"
+            ]
+          },
+          {
+            id: 'salini',
+            name: 'Salini SJ',
+            role: 'Senior Illustrator',
+            collaborators: ['karishma', 'alfredo'], // Social media illustrations
+            responsibilities: [
+              "Every illustration about Pembe",
+              "Stories",
+              "Seasonal illustrations",
+              "Comic style illustrations",
+              "GIFs",
+              "Social media illustrations",
+              "Mock ups"
+            ]
+          },
+          {
+            id: 'jeki',
+            name: 'Jeki',
+            role: 'Illustrator',
+            collaborators: ['salini', 'alfredo'], // Illustrator team
+            responsibilities: [
+              "Illustrations",
+              "Creative support",
+              "Concept art"
+            ]
+          },
+          {
+            id: 'sarath',
+            name: 'Sarath Kumar SJ',
+            role: 'Animator',
+            collaborators: ['salini', 'karishma'],
+            responsibilities: [
+              "Every animation that we need for Pembe"
+            ]
+          }
+        ]
+      },
+      {
+        id: 'social',
+        name: 'Social Media',
+        icon: <Share2 className="w-6 h-6" />,
+        color: 'bg-fuchsia-200',
+        borderColor: 'border-fuchsia-300',
+        members: [
+          {
+            id: 'karishma',
+            name: 'Karishma Singh',
+            role: 'Social Media Manager',
+            collaborators: ['sarah', 'arjun', 'salini', 'sarath', 'sertan'],
+            responsibilities: [
+              "Social media coordination",
+              "Answering social media comments",
+              "Social media trend spotter",
+              "Community management",
+              "Copy writing"
+            ]
+          },
+          {
+            id: 'patrick',
+            name: 'Patrick Thorsen',
+            role: 'Multi Media Designer',
+            collaborators: ['sertan', 'sarah'],
+            responsibilities: [
+              "Story Ideas",
+              "YouTube",
+              "Fan engagement",
+              "Discord engagement",
+              "Pembe expert"
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
+  const getRelationshipStatus = (memberId) => {
+    if (!hoveredMemberId) return 'normal';
+    if (memberId === hoveredMemberId) return 'active';
+    
+    const hoveredMember = findMemberData(hoveredMemberId, organizationData);
+    if (hoveredMember?.collaborators?.includes(memberId)) return 'collaborator';
+    
+    return 'dimmed';
+  };
+
+  const MemberCard = ({ member, colorClass, compact = false }) => {
+    const status = getRelationshipStatus(member.id);
+    
+    // Dynamic styles based on relationship status
+    const statusStyles = {
+      normal: "opacity-100 scale-100 grayscale-0",
+      active: "opacity-100 scale-105 ring-4 ring-offset-2 ring-blue-400 z-30 grayscale-0",
+      collaborator: "opacity-100 scale-105 ring-4 ring-offset-2 ring-green-400 z-30 grayscale-0",
+      dimmed: "opacity-30 scale-95 grayscale transition-all duration-300"
+    };
+
+    return (
+      <div 
+        onClick={(e) => { e.stopPropagation(); setSelectedMember(member); }}
+        onMouseEnter={() => setHoveredMemberId(member.id)}
+        onMouseLeave={() => setHoveredMemberId(null)}
+        className={`relative cursor-pointer transition-all duration-300 ${statusStyles[status]} z-10`}
+      >
+        <div className={`
+          ${compact ? 'w-36 p-3' : 'w-40 md:w-48 p-4'} 
+          rounded-xl shadow-lg ${colorClass || 'bg-white'} border-2 border-white/50 backdrop-blur-sm 
+          flex flex-col items-center text-center h-full relative overflow-hidden
+        `}>
+          {/* Badge for Collaborators */}
+          {status === 'collaborator' && (
+            <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] px-2 py-1 rounded-bl-lg font-bold animate-pulse z-20">
+              WORKS WITH
+            </div>
+          )}
+
+          <div className={`${compact ? 'w-12 h-12' : 'w-16 h-16'} rounded-full bg-white/50 mb-2 flex items-center justify-center text-slate-600 shadow-inner transition-transform duration-300`}>
+             <User size={compact ? 24 : 32} />
+          </div>
+          <h3 className="font-bold text-slate-800 text-sm leading-tight mb-1">{member.name}</h3>
+          <p className="text-[10px] md:text-xs font-semibold text-slate-600 uppercase tracking-wide leading-tight mb-3">{member.role}</p>
+          
+          <div className="mt-auto">
+             <span className="inline-block text-[9px] font-bold bg-white/50 text-slate-500 px-2 py-1 rounded-full border border-slate-200 group-hover:bg-slate-800 group-hover:text-white group-hover:border-slate-800 transition-all">
+               Responsibilities
+             </span>
+          </div>
+        </div>
+        
+        {/* Connecting line stub (visual flourish for active items) */}
+        {(status === 'active' || status === 'collaborator') && (
+           <div className="absolute -inset-2 border border-dashed border-slate-400 rounded-2xl opacity-20 pointer-events-none"></div>
+        )}
+      </div>
+    );
+  };
+
+  const Modal = ({ member, onClose }) => {
+    if (!member) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="bg-gradient-to-r from-pink-400 to-purple-400 p-6 text-white relative">
+            <button 
+              onClick={onClose}
+              className="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-2xl font-bold mb-1">{member.name}</h2>
+            <p className="text-pink-50 font-medium">{member.role}</p>
+          </div>
+          <div className="p-6 max-h-[60vh] overflow-y-auto">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Core Responsibilities</h3>
+            <ul className="space-y-3">
+              {member.responsibilities.map((resp, idx) => (
+                <li key={idx} className="flex items-start text-slate-600 group">
+                  <div className="min-w-[6px] h-[6px] rounded-full bg-pink-400 mt-2 mr-3 group-hover:scale-125 transition-transform" />
+                  <span className="leading-relaxed">{resp}</span>
+                </li>
+              ))}
+            </ul>
+            
+            {member.collaborators && member.collaborators.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Works Closely With</h3>
+                <div className="flex flex-wrap gap-2">
+                  {member.collaborators.map(collabId => {
+                    const collabData = findMemberData(collabId, organizationData);
+                    return collabData ? (
+                      <span key={collabId} className="px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full border border-green-100">
+                        {collabData.name}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button 
+              onClick={onClose}
+              className="px-6 py-2 bg-slate-800 text-white rounded-full text-sm font-medium hover:bg-slate-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 p-4 md:p-8 font-sans overflow-x-hidden" onClick={() => setHoveredMemberId(null)}>
+      {/* Header */}
+      <header className="text-center mb-8">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">Team Structure</h1>
+        <div className="flex items-center justify-center gap-2 text-slate-500 text-sm">
+          <Network size={16} />
+          <span>Hover cards to see cross-functional connections</span>
+        </div>
+      </header>
+
+      <div className="max-w-[95vw] mx-auto overflow-x-auto pb-12 px-2 md:px-4">
+        <div className="min-w-fit flex flex-col items-center">
+          
+          {/* Level 1: Founder */}
+          <div className="mb-16 relative z-10">
+            <div className="relative z-20">
+              <MemberCard member={organizationData.leader} colorClass="bg-gradient-to-br from-rose-200 to-pink-200 border-pink-300" />
+            </div>
+            {/* Vertical connector from Founder */}
+            <div className={`absolute left-1/2 top-full h-16 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+          </div>
+
+          {/* Departments Container */}
+          <div className="flex gap-8 md:gap-12 relative items-start">
+            {/* Horizontal Connector Line */}
+            <div className={`absolute -top-8 left-0 right-0 border-t-2 border-slate-300 mx-12 ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+            {/* Center Vertical Connector */}
+            <div className={`absolute -top-16 left-1/2 w-0.5 h-8 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+
+            {/* Department Columns */}
+            {organizationData.departments.map((dept, deptIdx) => (
+              <div key={dept.id} className="flex flex-col items-center relative px-2">
+                {/* Vertical connector to department top */}
+                <div className={`absolute -top-8 left-1/2 h-8 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+
+                {/* Department Header */}
+                <div className={`mb-8 flex items-center gap-2 px-6 py-2 rounded-full ${dept.color} ${dept.borderColor} border shadow-sm whitespace-nowrap z-20 transition-opacity duration-300 ${hoveredMemberId ? 'opacity-40 grayscale' : 'opacity-100'}`}>
+                  <div className="text-slate-700">{dept.icon}</div>
+                  <span className="font-bold text-slate-800">{dept.name}</span>
+                </div>
+
+                {/* Render Logic */}
+                {dept.manager ? (
+                   // HIERARCHICAL STRUCTURE
+                   <div className="flex flex-col items-center">
+                      {/* Manager Card */}
+                      <div className="relative mb-12">
+                        <MemberCard member={dept.manager} colorClass="bg-white/90" />
+                        <div className={`absolute left-1/2 top-full h-12 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+                      </div>
+
+                      {/* Subordinates Row */}
+                      <div className="flex gap-4 relative">
+                         <div className={`absolute -top-6 left-10 right-10 border-t-2 border-slate-300 ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+                         <div className={`absolute -top-12 left-1/2 h-6 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+
+                         {dept.members.map((member, mIdx) => (
+                           <div key={member.id} className="relative pt-6">
+                             <div className={`absolute -top-6 left-1/2 h-6 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+                             <MemberCard member={member} colorClass="bg-white/60" compact={true} />
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+                ) : (
+                   // FLAT STRUCTURE
+                   <div className="flex gap-6 items-start">
+                     {dept.members.map((member, memberIdx) => (
+                        <div key={member.id} className="relative">
+                          {dept.members.length > 1 && (
+                             <>
+                                <div className={`absolute -top-6 h-0.5 bg-slate-300 
+                                  ${memberIdx === 0 ? 'w-1/2 right-0' : ''}
+                                  ${memberIdx === dept.members.length - 1 ? 'w-1/2 left-0' : ''}
+                                  ${memberIdx > 0 && memberIdx < dept.members.length - 1 ? 'w-full' : ''}
+                                  ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity
+                                `}></div>
+                                <div className={`absolute -top-6 left-1/2 h-6 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+                                <div className={`absolute -top-12 left-1/2 h-6 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+                             </>
+                          )}
+                          
+                          {dept.members.length === 1 && (
+                            <div className={`absolute -top-12 left-1/2 h-12 w-0.5 bg-slate-300 -ml-[1px] ${hoveredMemberId ? 'opacity-20' : 'opacity-100'} transition-opacity`}></div>
+                          )}
+
+                          <MemberCard member={member} colorClass="bg-white/80" />
+                        </div>
+                      ))}
+                   </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Modal member={selectedMember} onClose={() => setSelectedMember(null)} />
+    </div>
+  );
+};
+
+export default OrgChart;
